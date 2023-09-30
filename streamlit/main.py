@@ -17,10 +17,6 @@ variables_list = []
 for k, v in names_queries.items():
     if k == option:
         for i in range(len(v[1])):
-            # v[1] is list of variables
-            # i = 2 here, each v[1][i] is a dict
-            # if v[1][i]["type"] is dropdown, put dropdown
-            # else if v[1][i]["type"] is int, put input_text
             if v[1][i]["type"] == "dropdown":
                 var_value = st.selectbox(label=v[1][i]["name"], options= v[1][i]["values"])
             elif v[1][i]["type"] == "int":
