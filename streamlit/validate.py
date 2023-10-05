@@ -71,6 +71,12 @@ try:
                 result = connection.execute(new_selected_query)
                 df = pd.DataFrame(result.fetchall(), columns=result.keys())
                 st.dataframe(df)
+                
+    
+            if option == "Store & Web Sales Quarterly Increment":
+                 st.write('AJ')
+                 st.bar_chart(df)
+        
 
 
     
