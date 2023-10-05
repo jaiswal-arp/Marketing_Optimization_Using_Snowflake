@@ -73,9 +73,6 @@ try:
                 st.dataframe(df)
 
 
-
-    
-   
     
     
 finally:

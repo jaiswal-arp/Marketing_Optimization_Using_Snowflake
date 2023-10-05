@@ -3,7 +3,7 @@
   [
     {
       "query": "with ss as (select ca_state, ca_county,d_qoy, d_year, sum(ss_ext_sales_price) as store_sales from store_sales,date_dim,customer_address where ss_sold_date_sk = d_date_sk and ss_addr_sk=ca_address_sk group by ca_state, ca_county,d_qoy, d_year), ws as (select ca_state, ca_county,d_qoy, d_year, sum(ws_ext_sales_price) as web_sales from web_sales,date_dim,customer_address where ws_sold_date_sk = d_date_sk and ws_bill_addr_sk=ca_address_sk group by ca_state, ca_county,d_qoy, d_year) select  ss1.ca_state, ss1.ca_county ,ss1.d_year ,ws2.web_sales/ws1.web_sales web_q1_q2_increase ,ss2.store_sales/ss1.store_sales store_q1_q2_increase ,ws3.web_sales/ws2.web_sales web_q2_q3_increase ,ss3.store_sales/ss2.store_sales store_q2_q3_increase from ss ss1 ,ss ss2 ,ss ss3 ,ws ws1 ,ws ws2 ,ws ws3 where ss1.d_qoy = 1 and ss1.d_year = {1}  and  ss1.ca_state = {0} and ss1.ca_county = ss2.ca_county and ss2.d_qoy = 2 and ss2.d_year = {1} and ss2.ca_state = {0} and ss2.ca_county = ss3.ca_county and ss3.d_qoy = 3 and ss3.d_year = {1} and ss3.ca_state = {0} and ss1.ca_county = ws1.ca_county and ws1.d_qoy = 1 and ws1.d_year = {1} and ws1.ca_state = {0} and ws1.ca_county = ws2.ca_county and ws2.d_qoy = 2 and ws2.d_year = {1} and ws2.ca_state = {0} and ws1.ca_county = ws3.ca_county and ws3.d_qoy = 3 and ws3.d_year ={1} and ws3.ca_state = {0} and case when ws1.web_sales > 0 then ws2.web_sales/ws1.web_sales else null end  > case when ss1.store_sales > 0 then ss2.store_sales/ss1.store_sales else null end and case when ws2.web_sales > 0 then ws3.web_sales/ws2.web_sales else null end > case when ss2.store_sales > 0 then ss3.store_sales/ss2.store_sales else null end order by web_q1_q2_increase;",
-      "name":"query_31",
+      "name":"Store & Web Sales Quarterly Increment",
       "variables":[
         {
           "name": "State",
@@ -11,34 +11,60 @@
           "values": ["'AL'","'AK'","'AZ'","'AR'","'CA'","'CO'","'CT'","'DE'","'FL'","'GA'","'HI'","'ID'","'IL'","'IN'","'IA'","'KS'","'KY'","'LA'","'ME'","'MD'","'MA'","'MI'","'MN'","'MS'","'MO'","'MT'","'NE'","'NV'","'NH'","'NJ'","'NM'","'NY'","'NC'","'ND'","'OH'","'OK'","'OR'","'PA'","'RI'","'SC'","'SD'","'TN'","'TX'","'UT'","'VT'","'VA'","'WA'","'WV'","'WI'","'WY'"]
         },
         {
-          "name": "year",
-          "type": "int"
+          "name": "Year",
+          "type": "dropdown",
+          "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010"]
         }
       ]
     },
     {
-      "query": "select  sum(cs_ext_discount_amt)  as 'excess discount amount'  from  catalog_sales  ,item  ,date_dim where i_manufact_id = 283 and i_item_sk = cs_item_sk  and d_date between '1999-02-22' and  dateadd(day,90,to_date('1999-02-22')) and d_date_sk = cs_sold_date_sk  and cs_ext_discount_amt   > (  select  1.3 * avg(cs_ext_discount_amt)  from  catalog_sales  ,date_dim where  cs_item_sk = i_item_sk  and d_date between '1999-02-22' and dateadd(day,90,to_date('1999-02-22')) and d_date_sk = cs_sold_date_sk  )  limit 100;",
-      "name": "query_32",
+      "query": "select  sum(cs_ext_discount_amt)  as \" excess discount amount\" from  catalog_sales ,item ,date_dim where i_manufact_id = {3} and i_item_sk = cs_item_sk and d_date between '{0}-{1}-{2}' and  dateadd(day,90,to_date('{0}-{1}-{2}')) and d_date_sk = cs_sold_date_sk and cs_ext_discount_amt  > (select 1.3 * avg(cs_ext_discount_amt) from catalog_sales ,date_dim where cs_item_sk = i_item_sk and d_date between '{0}-{1}-{2}' and dateadd(day,90,to_date('{0}-{1}-{2}')) and d_date_sk = cs_sold_date_sk) limit 100;",
+      "name": "Excess Discount Amount Provided By Manufacturer",
       "variables": [
         {
-          "name": "trash1",
-          "type": "dropdown",
-          "values": ["avg", "min", "max", "sum"]
-        },
-        {
-          "name": "trash2",
+          "name": "Year",
           "type": "int"
         },
         {
-          "name": "trash3",
-          "type": "string"
+          "name": "Month",
+          "type": "int"
+        },
+        {
+          "name": "Day",
+          "type": "int"
+        },
+        {
+          "name": "Manufacturer ID",
+          "type": "int"
         }
       ]
+
     },
     {
-      "query": "with ss as ( select i_manufact_id,sum(ss_ext_sales_price) total_sales from store_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('Electronics')) and ss_item_sk = i_item_sk and ss_sold_date_sk = d_date_sk and d_year = 1999 and d_moy = 7 and ss_addr_sk = ca_address_sk and ca_gmt_offset = -5  group by i_manufact_id), cs as ( select i_manufact_id,sum(cs_ext_sales_price) total_sales from catalog_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('Electronics')) and cs_item_sk = i_item_sk and cs_sold_date_sk = d_date_sk and d_year = 1999 and d_moy = 7 and cs_bill_addr_sk = ca_address_sk and ca_gmt_offset = -5  group by i_manufact_id), ws as ( select i_manufact_id,sum(ws_ext_sales_price) total_sales from web_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('Electronics')) and ws_item_sk = i_item_sk and ws_sold_date_sk = d_date_sk and d_year = 1999 and d_moy = 7 and ws_bill_addr_sk = ca_address_sk and ca_gmt_offset = -5 group by i_manufact_id) select  i_manufact_id ,sum(total_sales) total_sales from  (select * from ss  union all select * from cs  union all select * from ws) tmp1 group by i_manufact_id order by total_sales limit 100;",
+      "query": "with ss as ( select i_manufact_id,sum(ss_ext_sales_price) total_sales from store_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('{0}')) and ss_item_sk = i_item_sk and ss_sold_date_sk = d_date_sk and d_year = {3} and d_moy = {2} and ss_addr_sk = ca_address_sk and ca_gmt_offset = {1}  group by i_manufact_id), cs as ( select i_manufact_id,sum(cs_ext_sales_price) total_sales from catalog_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('{0}')) and cs_item_sk = i_item_sk and cs_sold_date_sk = d_date_sk and d_year = {3} and d_moy = {2} and cs_bill_addr_sk = ca_address_sk and ca_gmt_offset = {1}  group by i_manufact_id), ws as ( select i_manufact_id,sum(ws_ext_sales_price) total_sales from web_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('Electronics')) and ws_item_sk = i_item_sk and ws_sold_date_sk = d_date_sk and d_year = {3} and d_moy = {2} and ws_bill_addr_sk = ca_address_sk and ca_gmt_offset = {1} group by i_manufact_id) select  i_manufact_id ,sum(total_sales) total_sales from  (select * from ss  union all select * from cs  union all select * from ws) tmp1 group by i_manufact_id order by total_sales limit 100;",
       "name": "query_33",
-      "variables": []
+      "variables": [
+        {
+          "name": "Category",
+          "type": "dropdown",
+          "values": ["Electronics", "Sports"]
+        },
+        {
+          "name": "Time Zone",
+          "type": "dropdown",
+          "values": ["-5","-6", "-7", "-8", "-9", "-10"]
+        },
+        {
+          "name": "Month",
+          "type": "dropdown",
+          "values": ["1","2", "3","4","5","6", "7", "8", "9", "10"]
+        },
+        {
+          "name": "Year",
+          "type": "dropdown",
+          "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010"]
+        }
+      ]
     },
     {
       "query": "select c_last_name ,c_first_name ,c_salutation ,c_preferred_cust_flag ,ss_ticket_number ,cnt from (select ss_ticket_number ,ss_customer_sk ,count(*) cnt from store_sales,date_dim,store,household_demographics where store_sales.ss_sold_date_sk = date_dim.d_date_sk and store_sales.ss_store_sk = store.s_store_sk   and store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk and (date_dim.d_dom between 1 and 3 or date_dim.d_dom between 25 and 28) and (household_demographics.hd_buy_potential = '1001-5000' or household_demographics.hd_buy_potential = '0-500') and household_demographics.hd_vehicle_count > 0 and (case when household_demographics.hd_vehicle_count > 0  then household_demographics.hd_dep_count/ household_demographics.hd_vehicle_count  else null  end)  > 1.2 and date_dim.d_year in (1998,1998+1,1998+2) and store.s_county in ('Quay County','Sumner County','Harper County','Pipestone County', 'Kittitas County','Surry County','Wadena County','Richland County') group by ss_ticket_number,ss_customer_sk) dn,customer where ss_customer_sk = c_customer_sk and cnt between 15 and 20 order by c_last_name,c_first_name,c_salutation,c_preferred_cust_flag desc, ss_ticket_number;",
