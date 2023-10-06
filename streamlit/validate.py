@@ -30,6 +30,8 @@ try:
     # Streamlit app header
     st.title('Samsung Marketing Insights Dashboard')
 
+    st.sidebar.title("Adjust Parameters")
+
     data = {}
     with open("./sql.json") as f:
         data = json.load(f)    
@@ -46,11 +48,15 @@ try:
         if var["type"] == "dropdown":
             var_value = st.sidebar.selectbox(label=var["name"], options= var["values"])
         elif var["type"] == "int":
-                try:
-                    var_value = int(st.sidebar.text_input(label=var["name"], value=0))
-                except ValueError:
-                    st.sidebar.write('Please enter a number!')
-                    continue
+            try:
+                var_value = int(st.sidebar.text_input(label=var["name"], value=0))
+            except ValueError:
+                st.sidebar.write('Please enter a number!')
+                continue
+           # if var["name"] == 'Manufacturer ID' and var_value < 3 :
+            #     st.sidebar.write("Only enter 3 digits")
+
+            
         elif var["type"] == "string":
                 try:
                     var_value = st.sidebar.text_input(label=var["name"], value='')
@@ -61,7 +67,7 @@ try:
 
         variables_list.append(var_value)
 
-    st.write(variables_list)
+   # st.write(variables_list)
 
    # button1 = st.button('Show Query')
    # if st.session_state.get('button') != True:
@@ -77,9 +83,13 @@ try:
                 st.dataframe(df)
                 
     
-            if option == "Store & Web Sales Quarterly Increment":
-                 st.write("Store & Web Sales Quarterly Increment Data")   
-                 st.bar_chart(df)
+           # if option == "Store & Web Sales Quarterly Increment":
+           #      st.write("Store & Web Sales Quarterly Increment Data")   
+           #      st.bar_chart(df)
+           # elif option == "Manufacturer Sales Analysis":
+           #      st.write("Manufacturer Sales Analysis Data")   
+                 
+         
 
     
 finally:
