@@ -1,0 +1,196 @@
+{
+  "data":
+  [
+    {
+      "query": "with ss as (select ca_state, ca_county,d_qoy, d_year,{1}(ss_ext_sales_price) as store_sales from store_sales,date_dim,customer_address where ss_sold_date_sk = d_date_sk and ss_addr_sk=ca_address_sk group by ca_state, ca_county,d_qoy, d_year), ws as (select ca_state, ca_county,d_qoy, d_year, {1}(ws_ext_sales_price) as web_sales from web_sales,date_dim,customer_address where ws_sold_date_sk = d_date_sk and ws_bill_addr_sk=ca_address_sk group by ca_state, ca_county,d_qoy, d_year) select  ss1.ca_state, ss1.ca_county ,ss1.d_year ,ws2.web_sales/ws1.web_sales web_q1_q2_increase ,ss2.store_sales/ss1.store_sales store_q1_q2_increase ,ws3.web_sales/ws2.web_sales web_q2_q3_increase ,ss3.store_sales/ss2.store_sales store_q2_q3_increase from ss ss1 ,ss ss2 ,ss ss3 ,ws ws1 ,ws ws2 ,ws ws3 where ss1.d_qoy = 1 and ss1.d_year = {1}  and  ss1.ca_state = {0} and ss1.ca_county = ss2.ca_county and ss2.d_qoy = 2 and ss2.d_year = {1} and ss2.ca_state = {0} and ss2.ca_county = ss3.ca_county and ss3.d_qoy = 3 and ss3.d_year = {1} and ss3.ca_state = {0} and ss1.ca_county = ws1.ca_county and ws1.d_qoy = 1 and ws1.d_year = {1} and ws1.ca_state = {0} and ws1.ca_county = ws2.ca_county and ws2.d_qoy = 2 and ws2.d_year = {1} and ws2.ca_state = {0} and ws1.ca_county = ws3.ca_county and ws3.d_qoy = 3 and ws3.d_year ={1} and ws3.ca_state = {0} and case when ws1.web_sales > 0 then ws2.web_sales/ws1.web_sales else null end  > case when ss1.store_sales > 0 then ss2.store_sales/ss1.store_sales else null end and case when ws2.web_sales > 0 then ws3.web_sales/ws2.web_sales else null end > case when ss2.store_sales > 0 then ss3.store_sales/ss2.store_sales else null end order by web_q1_q2_increase;",
+      "name":"Store & Web Sales Quarterly Increment",
+      "variables":[
+        {
+          "name": "State",
+          "type": "dropdown",
+          "values": ["'AL'","'AK'","'AZ'","'AR'","'CA'","'CO'","'CT'","'DE'","'FL'","'GA'","'HI'","'ID'","'IL'","'IN'","'IA'","'KS'","'KY'","'LA'","'ME'","'MD'","'MA'","'MI'","'MN'","'MS'","'MO'","'MT'","'NE'","'NV'","'NH'","'NJ'","'NM'","'NY'","'NC'","'ND'","'OH'","'OK'","'OR'","'PA'","'RI'","'SC'","'SD'","'TN'","'TX'","'UT'","'VT'","'VA'","'WA'","'WV'","'WI'","'WY'"]
+        },
+        {
+          "name": "Year",
+          "type": "dropdown",
+          "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010"]
+        },
+        {
+          "name": "Aggregate Function",
+          "type": "dropdown",
+          "values": ["max","min","sum", "avg"]
+        }
+      ]
+    },
+    {
+      "query": "select  sum(cs_ext_discount_amt)  as \" excess discount amount\" from  catalog_sales ,item ,date_dim where i_manufact_id = {3} and i_item_sk = cs_item_sk and d_date between '{0}-{1}-{2}' and  dateadd(day,90,to_date('{0}-{1}-{2}')) and d_date_sk = cs_sold_date_sk and cs_ext_discount_amt  > (select 1.3 * avg(cs_ext_discount_amt) from catalog_sales ,date_dim where cs_item_sk = i_item_sk and d_date between '{0}-{1}-{2}' and dateadd(day,90,to_date('{0}-{1}-{2}')) and d_date_sk = cs_sold_date_sk) limit 100;",
+      "name": "Excess Discount Amount Provided By Manufacturer",
+      "variables": [
+        {
+          "name": "Year",
+          "type": "int"
+        },
+        {
+          "name": "Month",
+          "type": "dropdown",
+          "values": ["1","2", "3","4","5","6", "7", "8", "9", "10","11","12"]
+        },
+        {
+          "name": "Day",
+          "type": "dropdown",
+          "values": ["1","2", "3","4","5","6", "7", "8", "9", "10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"]
+        },
+        {
+          "name": "Manufacturer ID",
+          "type": "int"
+        }
+      ]
+
+    },
+    {
+      "query": "with ss as ( select i_manufact_id,sum(ss_ext_sales_price) total_sales from store_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('{0}')) and ss_item_sk = i_item_sk and ss_sold_date_sk = d_date_sk and d_year = {3} and d_moy = {2} and ss_addr_sk = ca_address_sk and ca_gmt_offset = {1}  group by i_manufact_id), cs as ( select i_manufact_id,sum(cs_ext_sales_price) total_sales from catalog_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('{0}')) and cs_item_sk = i_item_sk and cs_sold_date_sk = d_date_sk and d_year = {3} and d_moy = {2} and cs_bill_addr_sk = ca_address_sk and ca_gmt_offset = {1}  group by i_manufact_id), ws as ( select i_manufact_id,sum(ws_ext_sales_price) total_sales from web_sales, date_dim, customer_address, item where i_manufact_id in (select i_manufact_id from item where i_category in ('Electronics')) and ws_item_sk = i_item_sk and ws_sold_date_sk = d_date_sk and d_year = {3} and d_moy = {2} and ws_bill_addr_sk = ca_address_sk and ca_gmt_offset = {1} group by i_manufact_id) select  i_manufact_id  as maufacturer_id ,sum(total_sales) total_sales from  (select * from ss  union all select * from cs  union all select * from ws) tmp1 group by i_manufact_id order by total_sales limit 100;",
+      "name": "Manufacturer Sales Analysis",
+      "variables": [
+        {
+          "name": "Category",
+          "type": "dropdown",
+          "values": ["Electronics", "Sports", "Home", "Music", "Women", "Men"]
+        },
+        {
+          "name": "Time Zone",
+          "type": "dropdown",
+          "values": ["-5","-6", "-7", "-8", "-9", "-10"]
+        },
+        {
+          "name": "Month",
+          "type": "dropdown",
+          "values": ["1","2", "3","4","5","6", "7", "8", "9", "10","11","12"]
+        },
+        {
+          "name": "Year",
+          "type": "dropdown",
+          "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010"]
+        }
+      ]
+    },
+    {
+      "query": "select c_last_name ,c_first_name ,c_salutation ,c_preferred_cust_flag ,ss_ticket_number ,cnt from (select ss_ticket_number ,ss_customer_sk ,count(*) cnt from store_sales,date_dim,store,household_demographics where store_sales.ss_sold_date_sk = date_dim.d_date_sk and store_sales.ss_store_sk = store.s_store_sk   and store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk and (date_dim.d_dom between 1 and 3 or date_dim.d_dom between 25 and 28) and (household_demographics.hd_buy_potential = '{4}' or household_demographics.hd_buy_potential = '{5}') and household_demographics.hd_vehicle_count > 0 and (case when household_demographics.hd_vehicle_count > 0  then household_demographics.hd_dep_count/ household_demographics.hd_vehicle_count  else null  end)  > 1.2 and date_dim.d_year ={0} and store.s_county in ('{1}','{2}','{3}') group by ss_ticket_number,ss_customer_sk) dn,customer where ss_customer_sk = c_customer_sk and cnt between 15 and 20 order by c_last_name,c_first_name,c_salutation,c_preferred_cust_flag desc, ss_ticket_number;",
+      "name": "Analysis by Sales and Demographics",
+      "variables": [{
+        "name": "Year",
+        "type": "dropdown",
+        "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010"]
+      },
+      {
+        "name": "County1",
+        "type": "dropdown",
+        "values": ["Quay County","Williamson County","Sumner County","Harper County","Pipestone County","Kittitas County","Surry County","Wadena County","Richland County", "Pulaski County", "Appanoose County", "Jackson County", "Adams County","Somerset County", "Cocke County", "Essex County", "Baltimore County", "Karnes County", "Stillwater County"]
+      },
+      {
+        "name": "County2",
+        "type": "dropdown",
+        "values": ["Quay County","Williamson County","Sumner County","Harper County","Pipestone County","Kittitas County","Surry County","Wadena County","Richland County", "Pulaski County", "Appanoose County", "Jackson County", "Adams County","Somerset County", "Cocke County", "Essex County", "Baltimore County", "Karnes County", "Stillwater County"]
+      },
+      {
+        "name": "County3",
+        "type": "dropdown",
+        "values": ["Quay County","Williamson County","Sumner County","Harper County","Pipestone County","Kittitas County","Surry County","Wadena County","Richland County", "Pulaski County", "Appanoose County", "Jackson County", "Adams County","Somerset County", "Cocke County", "Essex County", "Baltimore County", "Karnes County", "Stillwater County"]
+      },
+      {
+        "name": "Household Buy Potential 1",
+        "type": "dropdown",
+        "values": [">150000", ">10000", "10000-8000", "8000-5000", "5000-2500", "2500-1000", "1000-500", "500-0","Unknown" ]
+        
+      },
+      {
+        "name": "Household Buy Potential 2",
+        "type": "dropdown",
+        "values": [">150000", ">10000", "10000-8000", "8000-5000", "5000-2500", "2500-1000", "1000-500", "500-0","Unknown" ]
+
+      }
+    ]
+    },
+    {
+      "query": "select ca_state, cd_gender, cd_marital_status, cd_dep_count, count(*) cnt1, {3}(cd_dep_count), {1}(cd_dep_count), {2}(cd_dep_count), cd_dep_employed_count, count(*) cnt2, {3}(cd_dep_employed_count), {1}(cd_dep_employed_count), {2}(cd_dep_employed_count), cd_dep_college_count, count(*) cnt3, {3}(cd_dep_college_count), {1}(cd_dep_college_count), {2}(cd_dep_college_count) from customer c,customer_address ca,customer_demographics where c.c_current_addr_sk = ca.ca_address_sk and cd_demo_sk = c.c_current_cdemo_sk and  exists (select * from store_sales,date_dim where c.c_customer_sk = ss_customer_sk and ss_sold_date_sk = d_date_sk and d_year = {0} and d_qoy < 4) and (exists (select * from web_sales,date_dim where c.c_customer_sk = ws_bill_customer_sk and ws_sold_date_sk = d_date_sk and d_year = {0} and d_qoy < 4) or  exists (select *  from catalog_sales,date_dim where c.c_customer_sk = cs_ship_customer_sk and cs_sold_date_sk = d_date_sk and d_year = {0} and d_qoy < 4)) group by ca_state, cd_gender, cd_marital_status, cd_dep_count, cd_dep_employed_count, cd_dep_college_count order by ca_state, cd_gender, cd_marital_status, cd_dep_count, cd_dep_employed_count, cd_dep_college_count limit 100;",
+      "name": "Customer Purchase Analysis by Year",
+      "variables": [
+        {
+          "name": "Year",
+          "type": "dropdown",
+          "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012"]
+        },
+        {
+          "name": "Aggregate Function 1",
+          "type": "dropdown",
+          "values": ["max","min","sum", "avg","count"]
+        },
+        {
+          "name": "Aggregate Function 2",
+          "type": "dropdown",
+          "values": ["max","min","sum", "avg","count"]
+        },
+        {
+          "name": "Aggregate Function 3",
+          "type": "dropdown",
+          "values": ["max","min","sum", "avg", "count"]
+        }
+      ]
+    },
+    {
+      "query": "select sum(ss_net_profit)/sum(ss_ext_sales_price) as gross_margin ,i_category ,i_class ,grouping(i_category)+grouping(i_class) as lochierarchy ,rank() over ( partition by grouping(i_category)+grouping(i_class), case when grouping(i_class) = 0 then i_category end  order by sum(ss_net_profit)/sum(ss_ext_sales_price) asc) as rank_within_parent from store_sales ,date_dim d1 ,item ,store where d1.d_year = {2}  and d1.d_date_sk = ss_sold_date_sk and i_item_sk  = ss_item_sk  and s_store_sk  = ss_store_sk and s_state in ('{0}','{1}') group by rollup(i_category,i_class) order by lochierarchy desc ,case when lochierarchy = 0 then i_category end ,rank_within_parent limit 100;",
+      "name": "query_36",
+      "variables": [
+        {
+          "name": "State 1",
+          "type": "dropdown",
+          "values": ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"]
+        },
+        {
+          "name": "State 2",
+          "type": "dropdown",
+          "values": ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"]
+        },       
+        {
+          "name": "Year",
+          "type": "dropdown",
+          "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012"]
+        }
+      ]
+    },
+    {
+      "query": "select i_item_id ,i_item_desc ,i_current_price from item, inventory, date_dim, catalog_sales where i_current_price between 58 and 58 + 30 and inv_item_sk = i_item_sk and d_date_sk=inv_date_sk and d_date between cast('2001-02-11' as date) and dateadd(day,60,to_date('2001-02-11')) and i_manufact_id in (910,893,984,865) and inv_quantity_on_hand between 100 and 500 and cs_item_sk = i_item_sk group by i_item_id,i_item_desc,i_current_price order by i_item_id limit 100;",
+      "name": "query_37",
+      "variables": [
+        {
+          "name": "Price",
+          "type": "int"
+        },
+        {
+          "name": "Manufacturer ID - Enter 3 digits",
+          "type": "dropdown",
+          "values": ["1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012"]
+        }
+      ]
+    },
+    {
+      "query": "select  count(*) from ( select distinct c_last_name, c_first_name, d_date from store_sales, date_dim, customer where store_sales.ss_sold_date_sk = date_dim.d_date_sk and store_sales.ss_customer_sk = customer.c_customer_sk and d_month_seq between 1176 and 1176 + 11 intersect select distinct c_last_name, c_first_name, d_date from catalog_sales, date_dim, customer where catalog_sales.cs_sold_date_sk = date_dim.d_date_sk and catalog_sales.cs_bill_customer_sk = customer.c_customer_sk and d_month_seq between 1176 and 1176 + 11 intersect select distinct c_last_name, c_first_name, d_date from web_sales, date_dim, customer where web_sales.ws_sold_date_sk = date_dim.d_date_sk and web_sales.ws_bill_customer_sk = customer.c_customer_sk and d_month_seq between 1176 and 1176 + 11 ) hot_cust limit 100 ;",
+      "name": "query_38",
+      "variables": []
+    },
+    {
+      "query": "with inv as (select w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy ,stdev,mean, case mean when 0 then null else stdev/mean end cov from(select w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy ,stddev_samp(inv_quantity_on_hand) stdev,avg(inv_quantity_on_hand) mean from inventory ,item ,warehouse ,date_dim where inv_item_sk = i_item_sk and inv_warehouse_sk = w_warehouse_sk and inv_date_sk = d_date_sk and d_year =2001 group by w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy) foo where case mean when 0 then 0 else stdev/mean end > 1) select inv1.w_warehouse_sk,inv1.i_item_sk,inv1.d_moy,inv1.mean, inv1.cov ,inv2.w_warehouse_sk,inv2.i_item_sk,inv2.d_moy,inv2.mean, inv2.cov from inv inv1,inv inv2 where inv1.i_item_sk = inv2.i_item_sk and inv1.w_warehouse_sk = inv2.w_warehouse_sk and inv1.d_moy=1 and inv2.d_moy=1+1 order by inv1.w_warehouse_sk,inv1.i_item_sk,inv1.d_moy,inv1.mean,inv1.cov ,inv2.d_moy,inv2.mean, inv2.cov ;",
+      "name": "query_39P1",
+      "variables": []
+    },
+    {
+      "query": "with inv as (select w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy ,stdev,mean, case mean when 0 then null else stdev/mean end cov from(select w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy ,stddev_samp(inv_quantity_on_hand) stdev,avg(inv_quantity_on_hand) mean from inventory ,item ,warehouse ,date_dim where inv_item_sk = i_item_sk and inv_warehouse_sk = w_warehouse_sk and inv_date_sk = d_date_sk and d_year =2001 group by w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy) foo where case mean when 0 then 0 else stdev/mean end > 1) select inv1.w_warehouse_sk,inv1.i_item_sk,inv1.d_moy,inv1.mean, inv1.cov ,inv2.w_warehouse_sk,inv2.i_item_sk,inv2.d_moy,inv2.mean, inv2.cov from inv inv1,inv inv2 where inv1.i_item_sk = inv2.i_item_sk and inv1.w_warehouse_sk = inv2.w_warehouse_sk and inv1.d_moy=1 and inv2.d_moy=1+1 and inv1.cov > 1.5 order by inv1.w_warehouse_sk,inv1.i_item_sk,inv1.d_moy,inv1.mean,inv1.cov ,inv2.d_moy,inv2.mean, inv2.cov ;",
+      "name": "query_39P2",
+      "variables": []
+    },
+    {
+      "query": "select   w_state ,i_item_id ,sum(case when (cast(d_date as date) < cast ('2002-05-08' as date))  then cs_sales_price - coalesce(cr_refunded_cash,0) else 0 end) as sales_before ,sum(case when (cast(d_date as date) >= cast ('2002-05-08' as date))  then cs_sales_price - coalesce(cr_refunded_cash,0) else 0 end) as sales_after from catalog_sales left outer join catalog_returns on (cs_order_number = cr_order_number  and cs_item_sk = cr_item_sk) ,warehouse  ,item ,date_dim where i_current_price between 0.99 and 1.49 and i_item_sk = cs_item_sk and cs_warehouse_sk = w_warehouse_sk  and cs_sold_date_sk = d_date_sk and d_date between dateadd(day,-30,to_date('2002-05-08')) and dateadd(day,30,to_date('2002-05-08'))  group by w_state,i_item_id order by w_state,i_item_id limit 100;",
+      "name": "query_40",
+      "variables": []
+    }
+  ]
+}
