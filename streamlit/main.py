@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_extras.stateful_button import button
 import json
 from sqlalchemy import create_engine
 import pandas as pd
@@ -32,6 +33,8 @@ selected_query = names_queries[option][0]
 variables_list = []
 for k, v in names_queries.items():
     if k == option:
+        if len(v[1]) == 0:
+            st.write("No variables!")
         for i in range(len(v[1])):
             if v[1][i]["type"] == "dropdown":
                 var_value = st.selectbox(label=v[1][i]["name"], options= v[1][i]["values"])
@@ -48,15 +51,11 @@ for k, v in names_queries.items():
                 raise(ValueError(""))
             variables_list.append(var_value)
 
-button1 = st.button('Show Query')
-if st.session_state.get('button') != True:
-    st.session_state['button'] = button1
-
-if st.session_state['button'] == True:
+if button("Show Query", key = "Show Query"):
     new_selected_query = selected_query.format(*variables_list)
     colored_selected_query = re.sub(r'\{(\d+)\}', r':blue[{\1}]', selected_query)
     st.write(colored_selected_query.format(*variables_list))
-    if st.button('Run'):
+    if button("Run", key = "Run"):
         with engine.connect() as connection:
             result = connection.execute(new_selected_query)
             df = pd.DataFrame(result.fetchall(), columns=result.keys())
