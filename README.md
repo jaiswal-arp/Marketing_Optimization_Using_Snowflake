@@ -18,4 +18,6 @@ Designing a dashboard for the same can be helpful to analytics teams and busines
 
 After getting a detailed understanding of the business questions from the [TPC-DS Dataset](https://www.tpc.org/tpc_documents_current_versions/pdf/tpc-ds_v2.5.0.pdf), we are building a [Streamlit](https://streamlit.io/) application to connect to [Snowflake](https://www.snowflake.com/en/) and fetch the respective SQL queries for the business questions that need to be answered.
 Streamlit can then be used to edit any parameters in the query and get results accordingly. Analyzing these results can be useful to improve strategies of different departments(promotions, marketing, recommendations etc.) of the company.
-![img.png](https://github.com/AlgoDM-Fall2023-Team4/Assignment01/blob/pranitha_dev/Assets/img.png)
+
+
+![img.png](https://github.com/AlgoDM-Fall2023-Team4/Assignment01/blob/pranitha_dev/Assets/Use_Case_diagram.png)
