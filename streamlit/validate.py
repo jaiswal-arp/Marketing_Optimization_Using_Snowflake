@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import json
 from dotenv import load_dotenv
+import datetime
 
 load_dotenv()
 
@@ -35,6 +36,7 @@ try:
     selected_query = names_queries[option]["query"]
 
     variables_list = []
+    err = 0
     for var in names_queries[option]["variables"]:
         if var["type"] == "dropdown":
             var_value = st.sidebar.selectbox(label=var["name"], options= var["values"])
@@ -42,32 +44,36 @@ try:
             try:
                 var_value = int(st.sidebar.text_input(label=var["name"], value=0))
             except ValueError:
-                st.sidebar.write('Please enter a number!')
+                st.sidebar.write(':red[Please enter a number!]')
+                err += 1
                 continue
            # if var["name"] == 'Manufacturer ID' and var_value < 3 :
             #     st.sidebar.write("Only enter 3 digits")
 
             
         elif var["type"] == "string":
-                try:
-                    var_value = st.sidebar.text_input(label=var["name"], value='')
-                except ValueError:
-                    st.sidebar.write('Enter an proper value')
+            try:
+                var_value = st.sidebar.text_input(label=var["name"], value='')
+            except ValueError:
+                st.sidebar.write(':red[Enter a proper value]')
+                err += 1
+        elif var["type"] == "date":
+            var_value = str(st.sidebar.date_input(var["name"], value = datetime.date(2000,1,1), format = "YYYY-MM-DD"))
         else:
-                raise(ValueError(""))
+            raise(ValueError("Unknown param"))
 
         variables_list.append(var_value)
 
-    if st.sidebar.button('Run'):
-            new_selected_query = selected_query.format(*variables_list)
+    if err == 0 and st.sidebar.button('Run'):
+        new_selected_query = selected_query.format(*variables_list)
 
-            with engine.connect() as connection:
-                # try:
-                result = connection.execute(new_selected_query)
-                df = pd.DataFrame(result.fetchall(), columns=result.keys())
-                st.dataframe(df)
-                # except:
-                #     st.write("Unexpected Input!")
+        with engine.connect() as connection:
+            # try:
+            result = connection.execute(new_selected_query)
+            df = pd.DataFrame(result.fetchall(), columns=result.keys())
+            st.dataframe(df)
+            # except:
+            #     st.write("Unexpected Error! - Please check the input")
 
 
            # if option == "Store & Web Sales Quarterly Increment":
