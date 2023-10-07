@@ -29,17 +29,18 @@ try:
         data = json.load(f)    
     
     names_queries = {i["name"]: {"query": i["query"], "variables": i["variables"]} for i in data["data"]}
-
     option = st.sidebar.selectbox('queries', names_queries.keys())
-
 
     selected_query = names_queries[option]["query"]
 
     variables_list = []
     err = 0
+
     for var in names_queries[option]["variables"]:
+      
         if var["type"] == "dropdown":
             var_value = st.sidebar.selectbox(label=var["name"], options= var["values"])
+            
         elif var["type"] == "int":
             try:
                 var_value = int(st.sidebar.text_input(label=var["name"], value=0))
@@ -47,9 +48,6 @@ try:
                 st.sidebar.write(':red[Please enter a number!]')
                 err += 1
                 continue
-           # if var["name"] == 'Manufacturer ID' and var_value < 3 :
-            #     st.sidebar.write("Only enter 3 digits")
-
             
         elif var["type"] == "string":
             try:
@@ -57,8 +55,10 @@ try:
             except ValueError:
                 st.sidebar.write(':red[Enter a proper value]')
                 err += 1
+                
         elif var["type"] == "date":
             var_value = str(st.sidebar.date_input(var["name"], value = datetime.date(2000,1,1), format = "YYYY-MM-DD"))
+            
         else:
             raise(ValueError("Unknown param"))
 
@@ -68,23 +68,13 @@ try:
         new_selected_query = selected_query.format(*variables_list)
 
         with engine.connect() as connection:
-            # try:
-            result = connection.execute(new_selected_query)
-            df = pd.DataFrame(result.fetchall(), columns=result.keys())
-            st.dataframe(df)
-            # except:
-            #     st.write("Unexpected Error! - Please check the input")
-
-
-           # if option == "Store & Web Sales Quarterly Increment":
-           #      st.write("Store & Web Sales Quarterly Increment Data")   
-           #      st.bar_chart(df)
-           # elif option == "Manufacturer Sales Analysis":
-           #      st.write("Manufacturer Sales Analysis Data")
+            try:
+              result = connection.execute(new_selected_query)
+              df = pd.DataFrame(result.fetchall(), columns=result.keys())
+              st.dataframe(df)
+            except:
+                st.write("Unexpected Error! - Please check the input")
                  
-         
-
-    
 finally:
     connection.close()
     engine.dispose()
