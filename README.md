@@ -1,13 +1,10 @@
-# Assignment 01
-
+# Marketing Strategy Optimization with TPC-DS Dataset and Streamlit Dashboard
 
 [CodeLab Documentation](https://codelabs-preview.appspot.com/?file_id=1n8mE3_f0qTe8m5An2pvlBcXlbylzqpmeve8I6kLEqpc/#0)
 
 [Marketing Dashboard](https://app.snowflake.com/qefqbdp/ryb09972/#/final-dashboard-dUwVOcGJT)
 
 [TPC-DS Dataset](https://www.tpc.org/tpc_documents_current_versions/pdf/tpc-ds_v2.5.0.pdf)
-
-[Github Repository](https://github.com/AlgoDM-Fall2023-Team4/Assignment01.git)
 
 **Overview**
 
